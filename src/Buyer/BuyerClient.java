@@ -1,15 +1,16 @@
-package Seller;
+package Buyer;
 
-import Common.AuctionItem;
 import Common.Client;
 import Common.Interface;
+import Seller.SellerClient;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.Objects;
 import java.util.Scanner;
 
-public class SellerClient {
+
+public class BuyerClient {
 
 
     public static Client client;
@@ -21,10 +22,11 @@ public class SellerClient {
 
             Scanner scanner = new Scanner(System.in);
 
-            Client client = loginOrRegister(auctionServer);
+            client = loginOrRegister(auctionServer);
 
             if (client != null) {
-                sellerMenu(auctionServer);
+                buyerMenu(auctionServer);
+//                System.out.println("anan");
             }
 
         } catch (Exception e) {
@@ -125,16 +127,16 @@ public class SellerClient {
         }
     }
 
-    public static void sellerMenu(Interface auctionServer) throws RemoteException {
+    public static void buyerMenu(Interface auctionServer) throws RemoteException {
 
         Scanner scanner = new Scanner(System.in);
         int switch_choice;
 
         do {
 
-            System.out.println("Seller Menu:");
-            System.out.println("1. Create Listing");
-            System.out.println("2. Manage Listing");
+            System.out.println("Buyer Menu:");
+            System.out.println("1. Browse listings");
+            System.out.println("2. Bid on listing with ID");
             System.out.println("0. Log Out");
 
             System.out.print("Enter your choice: ");
@@ -142,10 +144,10 @@ public class SellerClient {
 
             switch (switch_choice) {
                 case 1:
-                    createListing(auctionServer);
+                    listListings(auctionServer);
                     break;
                 case 2:
-                    manageListing(auctionServer);
+                    bidOnListing(auctionServer);
                     break;
                 case 0:
                     System.out.println("Logging Out of Seller Client...");
@@ -160,109 +162,26 @@ public class SellerClient {
 
     }
 
-    private static void manageListing(Interface auctionServer) throws RemoteException {
-
+    private static void bidOnListing(Interface auctionServer) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
-        int switch_choice;
 
-        do {
+        System.out.print("Which item would you like to bid on:");
+        int itemID = scanner.nextInt();
+        if(auctionServer.getAuctionItems().get(itemID).getCurrentBidder() == client){
+            System.out.println("You are already the highest bidder in this auction.");
+            return;
+        }
+        System.out.println(auctionServer.getAuctionItems().get(itemID).getItemId() + ":" + auctionServer.getAuctionItems().get(itemID).getItemName() + " \nCurrent Bid: " +
+                auctionServer.getAuctionItems().get(itemID).getCurrentBid() + "\nItem Description: " + auctionServer.getAuctionItems().get(itemID).getItemDesc());
+        System.out.print("Your bid: ");
+        float newBid = scanner.nextFloat();
+        while(newBid <= auctionServer.getAuctionItems().get(itemID).getCurrentBid()){
+            System.out.print("Your bid is too low. Please enter a higher bid:");
+            newBid = scanner.nextFloat();
+        }
+        auctionServer.getAuctionItems().get(itemID).setCurrentBid(newBid);
+        auctionServer.getAuctionItems().get(itemID).setCurrentBidder(client);
+        System.out.println("Your bid is currently the highest bid!");
 
-            System.out.println("Seller Menu:");
-            System.out.println("1. Close auction");
-            System.out.println("2. List all active auctions");
-            System.out.println("0. Go back");
-
-            System.out.print("Enter your choice: ");
-            switch_choice = scanner.nextInt();
-
-            switch (switch_choice) {
-                case 1:
-                    closeListing(auctionServer);
-                    break;
-                case 2:
-                    listListings(auctionServer);
-                    break;
-                case 0:
-                    System.out.println("Going back to the seller menu.");
-                    sellerMenu(auctionServer);
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-
-            }
-        } while (login_status);
-
-    }
-
-    private static void closeListing(Interface auctionServer) {
-
-    }
-
-    private static void createListing(Interface auctionServer) throws RemoteException {
-
-        Scanner scanner = new Scanner(System.in);
-        int switch_choice;
-
-        System.out.println("Please Enter Item Details:");
-
-        System.out.print("Item name: ");
-        String itemName = scanner.nextLine();
-        System.out.print("Item description: ");
-        String itemDesc = scanner.nextLine();
-        System.out.print("Starting price for the item: ");
-        float startPrice = scanner.nextFloat();
-        System.out.print("Reserve price for the item: ");
-        float reservePrice = scanner.nextFloat();
-
-        AuctionItem item = new AuctionItem(auctionServer.getAuctionItems().size(),itemName,itemDesc,startPrice,reservePrice, client.getClientId(),startPrice, null,0);
-
-
-        do {
-
-            System.out.println("Choose Auction Type:");
-            System.out.println("1. Forward Auction");
-            System.out.println("2. Reverse Auction");
-            System.out.println("3. Double Auction");
-            System.out.println("0. Go Back");
-
-            System.out.print("Enter your choice: ");
-            switch_choice = scanner.nextInt();
-
-            switch (switch_choice) {
-                case 1:
-                    ForwardAuction(auctionServer, item);
-                    sellerMenu(auctionServer);
-                    break;
-                case 2:
-                    ReverseAuction(auctionServer, item);
-                    sellerMenu(auctionServer);
-                    break;
-                case 3:
-                    DoubleAuction(auctionServer, item);
-                    sellerMenu(auctionServer);
-                    break;
-                case 0:
-                    System.out.println("Going back to seller menu.");
-                    sellerMenu(auctionServer);
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-
-            }
-        } while (switch_choice != 0);
-    }
-
-    private static void DoubleAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
-        item.setAuctionType(2);
-        auctionServer.putAuctionItems(item);
-    }
-
-    private static void ReverseAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
-        item.setAuctionType(1);
-        auctionServer.putAuctionItems(item);
-    }
-
-    private static void ForwardAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
-        auctionServer.putAuctionItems(item);
     }
 }
