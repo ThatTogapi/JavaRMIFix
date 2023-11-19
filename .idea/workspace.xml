@@ -1,23 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="16c61c91-c95b-4c79-86f4-bb7c8c117659" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/JavaRMIFix.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Common/Client.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Common/ClientInt.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Common/Interface.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Seller/AuctionItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Seller/SellerClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Server/AuctionItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Server/Server.java" afterDir="false" />
+    <list default="true" id="16c61c91-c95b-4c79-86f4-bb7c8c117659" name="Changes" comment="Rewritten code for client handling.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Common/AuctionItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/AuctionItem.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Common/Interface.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/Interface.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Seller/SellerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Seller/SellerClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,8 +94,16 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1700397238687</updated>
-      <workItem from="1700397240096" duration="6728000" />
+      <workItem from="1700397240096" duration="10355000" />
     </task>
+    <task id="LOCAL-00001" summary="Rewritten code for client handling.">
+      <created>1700406554333</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1700406554333</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -122,5 +119,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Rewritten code for client handling." />
+    <option name="LAST_COMMIT_MESSAGE" value="Rewritten code for client handling." />
   </component>
 </project>

@@ -21,6 +21,15 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface 
         super();
     }
 
+    public Map<Integer, AuctionItem> getAuctionItems() {
+        return auctionItems;
+    }
+
+    public void putAuctionItems(AuctionItem auctionItem) {
+        auctionItems.put(auctionItems.size(),auctionItem);
+        System.out.println("Client " + auctionItem.getOwnerID() + " listed " + auctionItem.getItemId() + auctionItem.getItemName());
+    }
+
     public Map<Integer, ClientInt> getClients() {
         return clients;
     }

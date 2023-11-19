@@ -8,13 +8,19 @@ public class AuctionItem implements Serializable {
     private String ItemDesc;
     private float startPrice;
     private float reservePrice;
+    private int ownerID;
+    private float currentBid;
+    private int auctionType;
 
-    public AuctionItem(int ItemId, String ItemName, String ItemDesc, float startPrice, float reservePrice){
+    public AuctionItem(int ItemId, String ItemName, String ItemDesc, float startPrice, float reservePrice, int ownerID, float currentBid, int auctionType){
         this.ItemId = ItemId;
         this.ItemName = ItemName;
         this.ItemDesc = ItemDesc;
         this.startPrice = startPrice;
         this.reservePrice = reservePrice;
+        this.ownerID = ownerID;
+        this.currentBid = currentBid;
+        this.auctionType = auctionType;
     }
 
     public int getItemId() {
@@ -37,6 +43,18 @@ public class AuctionItem implements Serializable {
         return reservePrice;
     }
 
+    public int getOwnerID() {
+        return ownerID;
+    }
+
+    public float getCurrentBid() {
+        return currentBid;
+    }
+
+    public int getAuctionType() {
+        return auctionType;
+    }
+
     public void setItemId(int itemId) {
         ItemId = itemId;
     }
@@ -57,4 +75,15 @@ public class AuctionItem implements Serializable {
         this.reservePrice = reservePrice;
     }
 
+    public void setOwnerID(int ownerID) {
+        this.ownerID = ownerID;
+    }
+
+    public void setCurrentBid(float currentBid) {
+        this.currentBid = currentBid;
+    }
+
+    public void setAuctionType(int auctionType) {
+        this.auctionType = auctionType;
+    }
 }
