@@ -1,5 +1,6 @@
 package Buyer;
 
+import Common.AuctionItem;
 import Common.Client;
 import Common.Interface;
 import Seller.SellerClient;
@@ -167,21 +168,28 @@ public class BuyerClient {
 
         System.out.print("Which item would you like to bid on:");
         int itemID = scanner.nextInt();
-        if(auctionServer.getAuctionItems().get(itemID).getCurrentBidder() == client){
+        AuctionItem item = auctionServer.getAuctionItems().get(itemID);
+//        System.out.println(client.getClientId());
+        if(item.getCurrentBidder() == client){
             System.out.println("You are already the highest bidder in this auction.");
             return;
         }
-        System.out.println(auctionServer.getAuctionItems().get(itemID).getItemId() + ":" + auctionServer.getAuctionItems().get(itemID).getItemName() + " \nCurrent Bid: " +
-                auctionServer.getAuctionItems().get(itemID).getCurrentBid() + "\nItem Description: " + auctionServer.getAuctionItems().get(itemID).getItemDesc());
+        if(item.getOwnerID() == client.getClientId()){
+            System.out.println("This is your own auction.");
+            return;
+        }
+        System.out.println(item.getItemId() + ":" + item.getItemName() + " \nCurrent Bid: " +
+                item.getCurrentBid() + "\nItem Description: " + item.getItemDesc());
         System.out.print("Your bid: ");
         float newBid = scanner.nextFloat();
-        while(newBid <= auctionServer.getAuctionItems().get(itemID).getCurrentBid()){
+        System.out.println(newBid);
+        while(newBid <= item.getCurrentBid()){
             System.out.print("Your bid is too low. Please enter a higher bid:");
             newBid = scanner.nextFloat();
         }
-        auctionServer.getAuctionItems().get(itemID).setCurrentBid(newBid);
-        auctionServer.getAuctionItems().get(itemID).setCurrentBidder(client);
+        item.setCurrentBid(newBid);
+        item.setCurrentBidder(client);
+        auctionServer.updateAuctionItem(item.getItemId(), item);
         System.out.println("Your bid is currently the highest bid!");
-
     }
 }

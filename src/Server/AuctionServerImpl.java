@@ -25,6 +25,11 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface 
         return auctionItems;
     }
 
+    @Override
+    public void updateAuctionItem(int itemId, AuctionItem updatedItem) throws RemoteException {
+        auctionItems.put(itemId, updatedItem);
+    }
+
     public void putAuctionItems(AuctionItem auctionItem) {
         auctionItems.put(auctionItems.size(),auctionItem);
         System.out.println("Client " + auctionItem.getOwnerID() + " listed " + auctionItem.getItemId() + auctionItem.getItemName());

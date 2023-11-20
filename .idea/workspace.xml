@@ -2,12 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="16c61c91-c95b-4c79-86f4-bb7c8c117659" name="Changes" comment="Rewritten code for client handling.">
-      <change afterPath="$PROJECT_DIR$/src/Buyer/BuyerClient.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Common/AuctionItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/AuctionItem.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Common/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Common/ClientInt.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/ClientInt.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Seller/SellerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Seller/SellerClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Buyer/BuyerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Buyer/BuyerClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Common/Interface.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/Interface.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +21,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="MarkdownSettingsMigration">
@@ -116,7 +119,7 @@
       <option name="presentableId" value="Default" />
       <updated>1700397238687</updated>
       <workItem from="1700397240096" duration="10355000" />
-      <workItem from="1700414033705" duration="11379000" />
+      <workItem from="1700414033705" duration="13470000" />
     </task>
     <task id="LOCAL-00001" summary="Rewritten code for client handling.">
       <created>1700406554333</created>
@@ -125,7 +128,14 @@
       <option name="project" value="LOCAL" />
       <updated>1700406554333</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Rewritten code for client handling.">
+      <created>1700431089113</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1700431089113</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

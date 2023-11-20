@@ -12,4 +12,5 @@ public interface Interface extends Remote {
 
     void putAuctionItems(AuctionItem auctionItem) throws RemoteException;
 
+    void updateAuctionItem(int itemId, AuctionItem updatedItem) throws RemoteException;
 }
