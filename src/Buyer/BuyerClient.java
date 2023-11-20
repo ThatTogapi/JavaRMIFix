@@ -95,6 +95,7 @@ public class BuyerClient {
         return client;
     }
 
+
     private static Client performLogin(Interface auctionServer) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter your login ID: ");
@@ -125,9 +126,17 @@ public class BuyerClient {
         }
         for(int i = 0; i < auctionServer.getAuctionItems().size(); i++){
 //            AuctionItem item = auctionServer.getAuctionItems().get(i);
+            String name;
+            if (Objects.isNull(auctionServer.getAuctionItems().get(i).getCurrentBidder())) {
+                name = "No Bidders.";
+            } else {
+                name = auctionServer.getAuctionItems().get(i).getCurrentBidder().getClientName();
+            }
             if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4) continue;
-            System.out.println("ItemID: " + i + ":" + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
-                    auctionServer.getAuctionItems().get(i).getCurrentBid() + "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc());
+            System.out.println("ItemID: " + i + ": " + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
+                    auctionServer.getAuctionItems().get(i).getCurrentBid() +  "\nCurrent Bidder: " + name +
+                    "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc());
+            System.out.println("-----------------------");
         }
     }
 
@@ -186,11 +195,19 @@ public class BuyerClient {
             String itemName = item.getItemName().toLowerCase();
             String itemDesc = item.getItemDesc().toLowerCase();
 
+            String name;
+            if (Objects.isNull(item.getCurrentBidder())) {
+                name = "No Bidders.";
+            } else {
+                name = item.getCurrentBidder().getClientName();
+            }
+
             // Check if the search term is present in item name or description
             if (itemName.contains(searchTerm) || itemDesc.contains(searchTerm)) {
                 System.out.println("ItemID: " + item.getItemId() +
                         "\nItem Name: " + item.getItemName() +
                         "\nCurrent Bid: " + item.getCurrentBid() +
+                        "\nCurrent Bidder: " + name +
                         "\nItem Description: " + item.getItemDesc() +
                         "\nItem Seller: " + clients.get(item.getOwnerID()).getClientName() +
                         "\n------------------------------");

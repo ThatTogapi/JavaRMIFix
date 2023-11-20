@@ -121,15 +121,19 @@ public class SellerClient {
             System.out.println("No active auctions.");
             return;
         }
-
-        Map<Integer, ClientInt> clients = auctionServer.getClients();
-
+//        Map<Integer, ClientInt> clients = auctionServer.getClients();
         for(int i = 0; i < auctionServer.getAuctionItems().size(); i++){
 //            AuctionItem item = auctionServer.getAuctionItems().get(i);
+            String name;
+            if (Objects.isNull(auctionServer.getAuctionItems().get(i).getCurrentBidder())) {
+                name = "No Bidders.";
+            } else {
+                name = auctionServer.getAuctionItems().get(i).getCurrentBidder().getClientName();
+            }
             if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4) continue;
-            System.out.println("ItemID: " + i + "\nItem Name: " + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
-                    auctionServer.getAuctionItems().get(i).getCurrentBid() + "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc() + "\nItem Seller: " +
-                    clients.get(auctionServer.getAuctionItems().get(i).getOwnerID()).getClientName());
+            System.out.println("ItemID: " + i + ": " + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
+                    auctionServer.getAuctionItems().get(i).getCurrentBid() +  "\nCurrent Bidder: " + name +
+                    "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc());
             System.out.println("-----------------------");
         }
     }
@@ -236,16 +240,18 @@ public class SellerClient {
 
         switch (switch_choice) {
             case 1:
-                if (item.getCurrentBid() > item.getReservePrice() || item.getCurrentBidder() == null) {
-                    System.out.println("Auction didn't beat the reserve price. Auction closed without a winner.");
-                    item.setCurrentBidder(client);
+                if (item.getAuctionType() != 4) {
+                    if (item.getCurrentBid() > item.getReservePrice() || item.getCurrentBidder() == null) {
+                        System.out.println("Auction didn't beat the reserve price. Auction closed without a winner.");
+                        item.setCurrentBidder(client);
+                    } else {
+                        System.out.println("The auction closed with a bid of " + item.getCurrentBid() + " and the winner is: " + item.getCurrentBidder().getClientName());
+                    }
                     item.setAuctionType(4);
                     auctionServer.updateAuctionItem(item.getItemId(), item);
-                    break;
+                } else {
+                    System.out.println("This auction was already over.");
                 }
-                System.out.println("The auction closed with a bid of " + item.getCurrentBid() + " and the winner is: " + item.getCurrentBidder().getClientName());
-                item.setAuctionType(4);
-                auctionServer.updateAuctionItem(item.getItemId(), item);
                 break;
             case 2:
                 System.out.println("Going back to seller menu.");
@@ -282,9 +288,9 @@ public class SellerClient {
         do {
 
             System.out.println("Choose Auction Type:");
-            System.out.println("1. Forward Auction");
-            System.out.println("2. Reverse Auction");
-            System.out.println("3. Double Auction");
+            System.out.println("1. Start Auction");
+//            System.out.println("2. Reverse Auction");
+            System.out.println("2. Start as Double Auction");
             System.out.println("0. Go Back");
 
             System.out.print("Enter your choice: ");
@@ -295,11 +301,11 @@ public class SellerClient {
                     ForwardAuction(auctionServer, item);
                     sellerMenu(auctionServer);
                     break;
+//                case 2:
+//                    ReverseAuction(auctionServer, item);
+//                    sellerMenu(auctionServer);
+//                    break;
                 case 2:
-                    ReverseAuction(auctionServer, item);
-                    sellerMenu(auctionServer);
-                    break;
-                case 3:
                     DoubleAuction(auctionServer, item);
                     sellerMenu(auctionServer);
                     break;
@@ -319,10 +325,10 @@ public class SellerClient {
         auctionServer.putAuctionItems(item);
     }
 
-    private static void ReverseAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
-        item.setAuctionType(1);
-        auctionServer.putAuctionItems(item);
-    }
+//    private static void ReverseAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
+//        item.setAuctionType(1);
+//        auctionServer.putAuctionItems(item);
+//    }
 
     private static void ForwardAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
         auctionServer.putAuctionItems(item);
