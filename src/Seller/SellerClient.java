@@ -2,10 +2,12 @@ package Seller;
 
 import Common.AuctionItem;
 import Common.Client;
+import Common.ClientInt;
 import Common.Interface;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -114,14 +116,21 @@ public class SellerClient {
     }
 
     public static void listListings(Interface auctionServer) throws RemoteException {
+
         if(auctionServer.getAuctionItems() == null){
             System.out.println("No active auctions.");
             return;
         }
+
+        Map<Integer, ClientInt> clients = auctionServer.getClients();
+
         for(int i = 0; i < auctionServer.getAuctionItems().size(); i++){
 //            AuctionItem item = auctionServer.getAuctionItems().get(i);
-            System.out.println("ItemID: " + i + ":" + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
-                    auctionServer.getAuctionItems().get(i).getCurrentBid() + "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc());
+            if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4) continue;
+            System.out.println("ItemID: " + i + "\nItem Name: " + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
+                    auctionServer.getAuctionItems().get(i).getCurrentBid() + "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc() + "\nItem Seller: " +
+                    clients.get(auctionServer.getAuctionItems().get(i).getOwnerID()).getClientName());
+            System.out.println("-----------------------");
         }
     }
 
@@ -194,8 +203,61 @@ public class SellerClient {
 
     }
 
-    private static void closeListing(Interface auctionServer) {
+    private static void closeListing(Interface auctionServer) throws RemoteException {
 
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Which auction would you like to close:");
+        int itemID = scanner.nextInt();
+        int switch_choice;
+
+        AuctionItem item = auctionServer.getAuctionItems().get(itemID);
+
+        if (item.getOwnerID() != client.getClientId()) {
+            System.out.println("This auction wasn't started by you.");
+            sellerMenu(auctionServer);
+        }
+
+        String name;
+        if (Objects.isNull(item.getCurrentBidder())) {
+            name = "No Bidders.";
+        } else {
+            name = item.getCurrentBidder().getClientName();
+        }
+
+        System.out.println(item.getItemId() + ": " + item.getItemName() + " \nCurrent Bid: " +
+                item.getCurrentBid() + "\nItem Description: " + item.getItemDesc() + "\nCurrent Bidder: " + name);
+        System.out.println("------------------------------");
+        System.out.println("Are you sure you want to close this listing?");
+        System.out.println("1: Yes");
+        System.out.println("2: No");
+        System.out.println("0: Go back.");
+        System.out.print("Your choice:");
+        switch_choice = scanner.nextInt();
+
+        switch (switch_choice) {
+            case 1:
+                if (item.getCurrentBid() > item.getReservePrice() || item.getCurrentBidder() == null) {
+                    System.out.println("Auction didn't beat the reserve price. Auction closed without a winner.");
+                    item.setCurrentBidder(client);
+                    item.setAuctionType(4);
+                    auctionServer.updateAuctionItem(item.getItemId(), item);
+                    break;
+                }
+                System.out.println("The auction closed with a bid of " + item.getCurrentBid() + " and the winner is: " + item.getCurrentBidder().getClientName());
+                item.setAuctionType(4);
+                auctionServer.updateAuctionItem(item.getItemId(), item);
+                break;
+            case 2:
+                System.out.println("Going back to seller menu.");
+                sellerMenu(auctionServer);
+                break;
+            case 0:
+                System.out.println("Going back to seller menu.");
+                sellerMenu(auctionServer);
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
     }
 
     private static void createListing(Interface auctionServer) throws RemoteException {

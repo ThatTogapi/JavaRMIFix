@@ -4,8 +4,7 @@
     <list default="true" id="16c61c91-c95b-4c79-86f4-bb7c8c117659" name="Changes" comment="Rewritten code for client handling.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Buyer/BuyerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Buyer/BuyerClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Common/Interface.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/Interface.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Seller/SellerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Seller/SellerClient.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,14 +36,16 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "C:/Users/tolga/Downloads/DSCoursework",
+    "nodejs_package_manager_path": "npm"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveMembersDialog.RECENTS_KEY">
       <recent name="Buyer.BuyerClient" />
@@ -119,7 +120,8 @@
       <option name="presentableId" value="Default" />
       <updated>1700397238687</updated>
       <workItem from="1700397240096" duration="10355000" />
-      <workItem from="1700414033705" duration="13470000" />
+      <workItem from="1700414033705" duration="13488000" />
+      <workItem from="1700445863153" duration="8506000" />
     </task>
     <task id="LOCAL-00001" summary="Rewritten code for client handling.">
       <created>1700406554333</created>
@@ -135,7 +137,14 @@
       <option name="project" value="LOCAL" />
       <updated>1700431089113</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Rewritten code for client handling.">
+      <created>1700439180201</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1700439180201</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

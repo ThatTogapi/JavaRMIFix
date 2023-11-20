@@ -2,11 +2,13 @@ package Buyer;
 
 import Common.AuctionItem;
 import Common.Client;
+import Common.ClientInt;
 import Common.Interface;
 import Seller.SellerClient;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -123,6 +125,7 @@ public class BuyerClient {
         }
         for(int i = 0; i < auctionServer.getAuctionItems().size(); i++){
 //            AuctionItem item = auctionServer.getAuctionItems().get(i);
+            if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4) continue;
             System.out.println("ItemID: " + i + ":" + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
                     auctionServer.getAuctionItems().get(i).getCurrentBid() + "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc());
         }
@@ -138,6 +141,7 @@ public class BuyerClient {
             System.out.println("Buyer Menu:");
             System.out.println("1. Browse listings");
             System.out.println("2. Bid on listing with ID");
+            System.out.println("3. Search for an item");
             System.out.println("0. Log Out");
 
             System.out.print("Enter your choice: ");
@@ -149,6 +153,9 @@ public class BuyerClient {
                     break;
                 case 2:
                     bidOnListing(auctionServer);
+                    break;
+                case 3:
+                    searchListings(auctionServer);
                     break;
                 case 0:
                     System.out.println("Logging Out of Seller Client...");
@@ -163,14 +170,41 @@ public class BuyerClient {
 
     }
 
+    private static void searchListings(Interface auctionServer) throws RemoteException {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter the search term: ");
+        String searchTerm = scanner.nextLine().toLowerCase();
+
+        System.out.println("Search Results:");
+        Map<Integer, ClientInt> clients = auctionServer.getClients();
+
+        for (Map.Entry<Integer, AuctionItem> entry : auctionServer.getAuctionItems().entrySet()) {
+            AuctionItem item = entry.getValue();
+
+            // Convert item details to lowercase for case-insensitive search
+            String itemName = item.getItemName().toLowerCase();
+            String itemDesc = item.getItemDesc().toLowerCase();
+
+            // Check if the search term is present in item name or description
+            if (itemName.contains(searchTerm) || itemDesc.contains(searchTerm)) {
+                System.out.println("ItemID: " + item.getItemId() +
+                        "\nItem Name: " + item.getItemName() +
+                        "\nCurrent Bid: " + item.getCurrentBid() +
+                        "\nItem Description: " + item.getItemDesc() +
+                        "\nItem Seller: " + clients.get(item.getOwnerID()).getClientName() +
+                        "\n------------------------------");
+            }
+        }
+    }
+
     private static void bidOnListing(Interface auctionServer) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Which item would you like to bid on:");
         int itemID = scanner.nextInt();
         AuctionItem item = auctionServer.getAuctionItems().get(itemID);
-//        System.out.println(client.getClientId());
-        if(item.getCurrentBidder() == client){
+        if(item.getCurrentBidder() != null && item.getCurrentBidder().getClientId() == client.getClientId()){
             System.out.println("You are already the highest bidder in this auction.");
             return;
         }
@@ -182,7 +216,6 @@ public class BuyerClient {
                 item.getCurrentBid() + "\nItem Description: " + item.getItemDesc());
         System.out.print("Your bid: ");
         float newBid = scanner.nextFloat();
-        System.out.println(newBid);
         while(newBid <= item.getCurrentBid()){
             System.out.print("Your bid is too low. Please enter a higher bid:");
             newBid = scanner.nextFloat();
