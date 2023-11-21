@@ -8,6 +8,9 @@ import Seller.SellerClient;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
@@ -35,6 +38,48 @@ public class BuyerClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static String generateRandomKey() {
+        // Generate a random 16-character secret key
+        SecureRandom random = new SecureRandom();
+        byte[] keyBytes = new byte[16];
+        random.nextBytes(keyBytes);
+        return bytesToHex(keyBytes);
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        // Convert byte array to hexadecimal string
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    public static String generateSignature(String data, String secretKey) throws Exception {
+        // Combine data with the secret key
+        String dataToSign = data + secretKey;
+
+        // Use SHA-256 for hashing
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(dataToSign.getBytes());
+
+        // Convert the hash to a hexadecimal string
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+
+        return hexString.toString();
     }
 
     public static Client loginOrRegister(Interface auctionServer) throws RemoteException {
@@ -86,15 +131,52 @@ public class BuyerClient {
             System.out.print("Enter your name: ");
             String name = scanner.next();
 
+            // Generate a random secret key during registration
+            String secretKey = generateRandomKey();
+
+            // Generate a signature for registration data
+            String registrationData = loginID + password + name;
+            String signature = generateSignature(registrationData, secretKey);
+
             client = new Client(loginID, password, name);
+
+            // Send registration data, signature, and secret key to the server for verification
+            boolean registrationSuccessful = auctionServer.registerClient(client, registrationData, signature, secretKey);
+
+            if (!registrationSuccessful) {
+                System.out.println("Registration failed. Signature verification unsuccessful.");
+                return null;
+            }
+
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             return null;
         }
-        auctionServer.putClient(client);
         return client;
     }
 
+    private static void listDoubleAuctions(Interface auctionServer) throws RemoteException {
+        for (Map.Entry<String, List<AuctionItem>> entry : auctionServer.getDoubleAuctions().entrySet()) {
+            String itemName = entry.getKey();
+            List<AuctionItem> auctionList = entry.getValue();
+
+            System.out.println("Double Auctions for item: " + itemName + " started by " + auctionServer.getClients().get(auctionServer.getDoubleAuctions().get(itemName).get(0).getOwnerID()).getClientName());
+
+            if (auctionList != null) {
+                for (AuctionItem auctionItem : auctionList) {
+                    System.out.println("ItemID: " + auctionItem.getItemId() +
+                            "\nItem Name: " + auctionItem.getItemName() +
+                            "\nCurrent Bid: " + auctionItem.getCurrentBid() +
+                            "\nCurrent Bidder: " + (auctionItem.getCurrentBidder() != null ? auctionItem.getCurrentBidder().getClientName() : "No Bidder") +
+                            "\nItem Description: " + auctionItem.getItemDesc() +
+                            "\nAuction Owner: " + auctionServer.getClients().get(auctionItem.getOwnerID()).getClientName());
+                    System.out.println("-----------------------");
+                }
+            } else {
+                System.out.println("No auctions for this item.");
+            }
+        }
+    }
 
     private static Client performLogin(Interface auctionServer) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
@@ -132,7 +214,7 @@ public class BuyerClient {
             } else {
                 name = auctionServer.getAuctionItems().get(i).getCurrentBidder().getClientName();
             }
-            if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4) continue;
+            if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4 || auctionServer.getAuctionItems().get(i).getAuctionType() == 2) continue;
             System.out.println("ItemID: " + i + ": " + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
                     auctionServer.getAuctionItems().get(i).getCurrentBid() +  "\nCurrent Bidder: " + name +
                     "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc());
@@ -151,6 +233,7 @@ public class BuyerClient {
             System.out.println("1. Browse listings");
             System.out.println("2. Bid on listing with ID");
             System.out.println("3. Search for an item");
+            System.out.println("4. See double auctions");
             System.out.println("0. Log Out");
 
             System.out.print("Enter your choice: ");
@@ -165,6 +248,9 @@ public class BuyerClient {
                     break;
                 case 3:
                     searchListings(auctionServer);
+                    break;
+                case 4:
+                    listDoubleAuctions(auctionServer);
                     break;
                 case 0:
                     System.out.println("Logging Out of Seller Client...");

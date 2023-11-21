@@ -2,14 +2,13 @@ package Seller;
 
 import Common.AuctionItem;
 import Common.Client;
-import Common.ClientInt;
 import Common.Interface;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Scanner;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.*;
 
 public class SellerClient {
 
@@ -32,6 +31,48 @@ public class SellerClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static String generateRandomKey() {
+        // Generate a random 16-character secret key
+        SecureRandom random = new SecureRandom();
+        byte[] keyBytes = new byte[16];
+        random.nextBytes(keyBytes);
+        return bytesToHex(keyBytes);
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        // Convert byte array to hexadecimal string
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    public static String generateSignature(String data, String secretKey) throws Exception {
+        // Combine data with the secret key
+        String dataToSign = data + secretKey;
+
+        // Use SHA-256 for hashing
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(dataToSign.getBytes());
+
+        // Convert the hash to a hexadecimal string
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+
+        return hexString.toString();
     }
 
     public static Client loginOrRegister(Interface auctionServer) throws RemoteException {
@@ -83,12 +124,27 @@ public class SellerClient {
             System.out.print("Enter your name: ");
             String name = scanner.next();
 
+            // Generate a random secret key during registration
+            String secretKey = generateRandomKey();
+
+            // Generate a signature for registration data
+            String registrationData = loginID + password + name;
+            String signature = generateSignature(registrationData, secretKey);
+
             client = new Client(loginID, password, name);
+
+            // Send registration data, signature, and secret key to the server for verification
+            boolean registrationSuccessful = auctionServer.registerClient(client, registrationData, signature, secretKey);
+
+            if (!registrationSuccessful) {
+                System.out.println("Registration failed. Signature verification unsuccessful.");
+                return null;
+            }
+
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             return null;
         }
-        auctionServer.putClient(client);
         return client;
     }
 
@@ -130,7 +186,7 @@ public class SellerClient {
             } else {
                 name = auctionServer.getAuctionItems().get(i).getCurrentBidder().getClientName();
             }
-            if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4) continue;
+            if(auctionServer.getAuctionItems().get(i).getAuctionType() == 4 || auctionServer.getAuctionItems().get(i).getAuctionType() == 2) continue;
             System.out.println("ItemID: " + i + ": " + auctionServer.getAuctionItems().get(i).getItemName() + " \nCurrent Bid: " +
                     auctionServer.getAuctionItems().get(i).getCurrentBid() +  "\nCurrent Bidder: " + name +
                     "\nItem Description: " + auctionServer.getAuctionItems().get(i).getItemDesc());
@@ -183,6 +239,7 @@ public class SellerClient {
             System.out.println("Seller Menu:");
             System.out.println("1. Close auction");
             System.out.println("2. List all active auctions");
+            System.out.println("3. List all active double auctions");
             System.out.println("0. Go back");
 
             System.out.print("Enter your choice: ");
@@ -194,6 +251,9 @@ public class SellerClient {
                     break;
                 case 2:
                     listListings(auctionServer);
+                    break;
+                case 3:
+                    listDoubleAuctions(auctionServer);
                     break;
                 case 0:
                     System.out.println("Going back to the seller menu.");
@@ -207,6 +267,29 @@ public class SellerClient {
 
     }
 
+    private static void listDoubleAuctions(Interface auctionServer) throws RemoteException {
+        for (Map.Entry<String, List<AuctionItem>> entry : auctionServer.getDoubleAuctions().entrySet()) {
+            String itemName = entry.getKey();
+            List<AuctionItem> auctionList = entry.getValue();
+
+            System.out.println("Double Auctions for item: " + itemName + " started by " + auctionServer.getClients().get(auctionServer.getDoubleAuctions().get(itemName).get(0).getOwnerID()).getClientName());
+
+            if (auctionList != null) {
+                for (AuctionItem auctionItem : auctionList) {
+                    System.out.println("ItemID: " + auctionItem.getItemId() +
+                            "\nItem Name: " + auctionItem.getItemName() +
+                            "\nCurrent Bid: " + auctionItem.getCurrentBid() +
+                            "\nCurrent Bidder: " + (auctionItem.getCurrentBidder() != null ? auctionItem.getCurrentBidder().getClientName() : "No Bidder") +
+                            "\nItem Description: " + auctionItem.getItemDesc() +
+                            "\nAuction Owner: " + auctionServer.getClients().get(auctionItem.getOwnerID()).getClientName());
+                    System.out.println("-----------------------");
+                }
+            } else {
+                System.out.println("No auctions for this item.");
+            }
+        }
+    }
+
     private static void closeListing(Interface auctionServer) throws RemoteException {
 
         Scanner scanner = new Scanner(System.in);
@@ -218,6 +301,11 @@ public class SellerClient {
 
         if (item.getOwnerID() != client.getClientId()) {
             System.out.println("This auction wasn't started by you.");
+            sellerMenu(auctionServer);
+        }
+
+        if(auctionServer.getAuctionItems().isEmpty()){
+            System.out.println("No active auctions.");
             sellerMenu(auctionServer);
         }
 
@@ -240,7 +328,7 @@ public class SellerClient {
 
         switch (switch_choice) {
             case 1:
-                if (item.getAuctionType() != 4) {
+                if (item.getAuctionType() != 4 && item.getAuctionType() != 2) {
                     if (item.getCurrentBid() > item.getReservePrice() || item.getCurrentBidder() == null) {
                         System.out.println("Auction didn't beat the reserve price. Auction closed without a winner.");
                         item.setCurrentBidder(client);
@@ -249,6 +337,9 @@ public class SellerClient {
                     }
                     item.setAuctionType(4);
                     auctionServer.updateAuctionItem(item.getItemId(), item);
+                } else if (item.getAuctionType() == 2) {
+                    System.out.println("Double auction closed, matching sellers with buyers.");
+                    closeDoubleAuction(auctionServer, item.getItemName());
                 } else {
                     System.out.println("This auction was already over.");
                 }
@@ -265,6 +356,53 @@ public class SellerClient {
                 System.out.println("Invalid choice. Please try again.");
         }
     }
+
+    private static void closeDoubleAuction(Interface auctionServer, String itemName) throws RemoteException {
+        List<AuctionItem> doubleAuctionItems = auctionServer.getDoubleAuctions().get(itemName);
+
+        // Check if the double auction has any items
+        if (doubleAuctionItems != null && !doubleAuctionItems.isEmpty()) {
+            if(doubleAuctionItems.get(0).getOwnerID() != client.getClientId()){
+                System.out.println("This auction wasn't started by you.");
+                return;
+            }
+            System.out.println("Closing double auction for item: " + itemName);
+            // Iterate through each item in the double auction
+            for (AuctionItem doubleAuctionItem : doubleAuctionItems) {
+                if (doubleAuctionItem.getCurrentBid() > doubleAuctionItem.getReservePrice() || doubleAuctionItem.getCurrentBidder() == null) {
+                    doubleAuctionItem.setAuctionType(4);
+                    auctionServer.updateAuctionItem(doubleAuctionItem.getItemId(), doubleAuctionItem);
+                    String bidderName = (doubleAuctionItem.getCurrentBidder() != null)
+                            ? doubleAuctionItem.getCurrentBidder().getClientName()
+                            : "No Bidder";
+                    System.out.println("Auction below didn't beat the reserve price. Auction closed without a winner.");
+                    System.out.println("ItemID: " + doubleAuctionItem.getItemId() +
+                            "\nItem Name: " + doubleAuctionItem.getItemName() +
+                            "\nCurrent Bid: " + doubleAuctionItem.getCurrentBid() +
+                            "\nCurrent Bidder: " + bidderName +
+                            "\nItem Description: " + doubleAuctionItem.getItemDesc() +
+                            "\nItem Owner: " + auctionServer.getClients().get(doubleAuctionItem.getOwnerID()).getClientName());
+                    System.out.println("-----------------------");
+                    doubleAuctionItem.setCurrentBidder(client);
+                    continue;
+                }
+                doubleAuctionItem.setAuctionType(4);
+                auctionServer.updateAuctionItem(doubleAuctionItem.getItemId(), doubleAuctionItem);
+                String bidderName = (doubleAuctionItem.getCurrentBidder() != null)
+                        ? doubleAuctionItem.getCurrentBidder().getClientName()
+                        : "No Bidder";
+                System.out.println("Auction below was won by: " + doubleAuctionItem.getCurrentBidder().getClientName() + " with a bid of: " + doubleAuctionItem.getCurrentBid());
+                System.out.println("ItemID: " + doubleAuctionItem.getItemId() +
+                        "\nItem Name: " + doubleAuctionItem.getItemName() +
+                        "\nItem Description: " + doubleAuctionItem.getItemDesc());
+                System.out.println("-----------------------");
+            }
+            System.out.println("Double auction closed.");
+        } else {
+            System.out.println("No active double auctions for item: " + itemName);
+        }
+    }
+
 
     private static void createListing(Interface auctionServer) throws RemoteException {
 
@@ -288,8 +426,7 @@ public class SellerClient {
         do {
 
             System.out.println("Choose Auction Type:");
-            System.out.println("1. Start Auction");
-//            System.out.println("2. Reverse Auction");
+            System.out.println("1. Start as Forward Auction");
             System.out.println("2. Start as Double Auction");
             System.out.println("0. Go Back");
 
@@ -301,11 +438,8 @@ public class SellerClient {
                     ForwardAuction(auctionServer, item);
                     sellerMenu(auctionServer);
                     break;
-//                case 2:
-//                    ReverseAuction(auctionServer, item);
-//                    sellerMenu(auctionServer);
-//                    break;
                 case 2:
+                    item.setAuctionType(2);
                     DoubleAuction(auctionServer, item);
                     sellerMenu(auctionServer);
                     break;
@@ -321,14 +455,36 @@ public class SellerClient {
     }
 
     private static void DoubleAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
-        item.setAuctionType(2);
-        auctionServer.putAuctionItems(item);
-    }
+        Scanner scanner = new Scanner(System.in);
 
-//    private static void ReverseAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
-//        item.setAuctionType(1);
-//        auctionServer.putAuctionItems(item);
-//    }
+        Map<String, List<AuctionItem>> activeDoubles = auctionServer.getDoubleAuctions();
+        if(activeDoubles.containsKey(item.getItemName().toLowerCase())){
+            System.out.println("A similar item is already in a double auction. Would you like to join that auction?\nIt was started by: " +
+                    auctionServer.getClients().get(activeDoubles.get(item.getItemName().toLowerCase()).get(0).getOwnerID()).getClientName());
+
+            System.out.println("1: Yes");
+            System.out.println("0: Go back.");
+            System.out.print("Your choice:");
+            int switch_choice = scanner.nextInt();
+
+            switch (switch_choice) {
+                case 1:
+                    System.out.println("Joined the double auction.");
+                    auctionServer.putAuctionItems(item);
+                    auctionServer.putDoubleAuctions(item.getItemName().toLowerCase(),item);
+                    return;
+                case 0:
+                    System.out.println("Going back to seller menu.");
+                    sellerMenu(auctionServer);
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+        System.out.println("Starting a new double auction.");
+        auctionServer.putAuctionItems(item);
+        auctionServer.putDoubleAuctions(item.getItemName().toLowerCase(),item);
+    }
 
     private static void ForwardAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
         auctionServer.putAuctionItems(item);
