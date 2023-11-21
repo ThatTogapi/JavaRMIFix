@@ -326,6 +326,9 @@ public class BuyerClient {
         item.setCurrentBid(newBid);
         item.setCurrentBidder(client);
         auctionServer.updateAuctionItem(item.getItemId(), item);
+        if(item.getAuctionType() == 2){
+            auctionServer.putDoubleAuctions(item.getItemName(), item);
+        }
         System.out.println("Your bid is currently the highest bid!");
     }
 }

@@ -358,7 +358,10 @@ public class SellerClient {
     }
 
     private static void closeDoubleAuction(Interface auctionServer, String itemName) throws RemoteException {
+
+//        List<AuctionItem> doubleAuctionItems = auctionServer.getDoubleAuctions().get(itemName).size();
         List<AuctionItem> doubleAuctionItems = auctionServer.getDoubleAuctions().get(itemName);
+        System.out.println();
 
         // Check if the double auction has any items
         if (doubleAuctionItems != null && !doubleAuctionItems.isEmpty()) {
@@ -367,7 +370,7 @@ public class SellerClient {
                 return;
             }
             System.out.println("Closing double auction for item: " + itemName);
-            // Iterate through each item in the double auction
+            // Iterate through each item in the double auction.
             for (AuctionItem doubleAuctionItem : doubleAuctionItems) {
                 if (doubleAuctionItem.getCurrentBid() > doubleAuctionItem.getReservePrice() || doubleAuctionItem.getCurrentBidder() == null) {
                     doubleAuctionItem.setAuctionType(4);
@@ -428,6 +431,7 @@ public class SellerClient {
             System.out.println("Choose Auction Type:");
             System.out.println("1. Start as Forward Auction");
             System.out.println("2. Start as Double Auction");
+            System.out.println("3. Start as Reverse Auction");
             System.out.println("0. Go Back");
 
             System.out.print("Enter your choice: ");
@@ -441,6 +445,11 @@ public class SellerClient {
                 case 2:
                     item.setAuctionType(2);
                     DoubleAuction(auctionServer, item);
+                    System.out.println(auctionServer.getDoubleAuctions());
+                    sellerMenu(auctionServer);
+                    break;
+                case 3:
+                    ForwardAuction(auctionServer, item);
                     sellerMenu(auctionServer);
                     break;
                 case 0:
