@@ -10,7 +10,7 @@ public interface ClientInt extends Remote {
 
     String getClientName() throws RemoteException;
 
-    boolean isClientSeller() throws RemoteException;
+//    boolean isClientSeller() throws RemoteException;
 
     void setClientId(int clientId) throws RemoteException;
 
@@ -18,5 +18,5 @@ public interface ClientInt extends Remote {
 
     void setClientPass(String clientPass) throws RemoteException;
 
-    void setClientSeller(boolean clientSeller) throws RemoteException;
+
 }

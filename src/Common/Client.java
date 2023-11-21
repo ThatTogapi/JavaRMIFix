@@ -3,17 +3,18 @@ package Common;
 import java.io.Serializable;
 
 public class Client implements ClientInt, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int ClientId;
     private String ClientName;
     private String ClientPass;
-    private boolean ClientSeller;
 
-    public Client(int ClientId, String ClientPass, String ClientName, boolean ClientSeller){
+    public Client(int ClientId, String ClientPass, String ClientName){
         this.ClientId = ClientId;
         this.ClientPass = ClientPass;
         this.ClientName = ClientName;
-        this.ClientSeller = ClientSeller;
     }
+
 
     public int getClientId() {
         return ClientId;
@@ -27,9 +28,9 @@ public class Client implements ClientInt, Serializable {
         return ClientName;
     }
 
-    public boolean isClientSeller() {
-        return ClientSeller;
-    }
+//    public boolean isClientSeller() {
+//        return ClientSeller;
+//    }
 
     public void setClientId(int clientId) {
         ClientId = clientId;
@@ -43,7 +44,8 @@ public class Client implements ClientInt, Serializable {
         ClientPass = clientPass;
     }
 
-    public void setClientSeller(boolean clientSeller) {
-        ClientSeller = clientSeller;
-    }
+//    public void setClientSeller(boolean clientSeller) {
+//        ClientSeller = clientSeller;
+//    }
+
 }
