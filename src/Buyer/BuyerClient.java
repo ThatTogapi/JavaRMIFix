@@ -5,6 +5,9 @@ import Common.Client;
 import Common.ClientInt;
 import Common.Interface;
 import Seller.SellerClient;
+import org.jgroups.Message;
+import org.jgroups.util.Util;
+import org.jgroups.*;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -24,7 +27,15 @@ public class BuyerClient {
 
     public static void main(String[] args) {
         try {
-            Interface auctionServer = (Interface) Naming.lookup("rmi://localhost:1099/auction");
+            // Replace "localhost" and port numbers with the actual IP addresses or hostnames and port numbers of your replicas
+            String[] replicaAddresses = {"localhost:1099", "localhost:1099", "localhost:1099"};
+
+            Interface auctionServer = connectToReplicas(replicaAddresses);
+
+            if (auctionServer == null) {
+                System.out.println("Unable to connect to replicas. Exiting Buyer Client.");
+                System.exit(1);
+            }
 
             Scanner scanner = new Scanner(System.in);
 
@@ -32,12 +43,34 @@ public class BuyerClient {
 
             if (client != null) {
                 buyerMenu(auctionServer);
-//                System.out.println("anan");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static Interface connectToReplicas(String[] replicaAddresses) {
+        int i = 0;
+        for (String replicaAddress : replicaAddresses) {
+            try {
+                String url = "rmi://" + replicaAddress + "/auction";
+                Interface server = (Interface) Naming.lookup(url);
+
+                i++;
+
+                // Test the connection by getting the number of clients
+                int numClients = server.getClients().size();
+                System.out.println("Connected to replica at " + replicaAddress + ". Number of clients: " + numClients);
+
+                // Return the first successfully connected replica
+                return server;
+            } catch (Exception e) {
+                // Print an error message and try the next replica
+                System.err.println("Error connecting to replica at " + replicaAddress + ": " + e.getMessage());
+            }
+        }
+        return null;
     }
 
     private static String generateRandomKey() {
