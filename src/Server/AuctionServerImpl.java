@@ -63,12 +63,12 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
             } else {
                 channel.connect("GroupCluster");
             }
-
+            requestStateFromExistingReplicas();
             Thread syncThread = new Thread(() -> {
                 while (true) {
                     try {
                         if (channel.isConnected()) {
-                            byte[] stateBytes = Util.objectToByteBuffer(new StateSyncMessage(channel.getAddress(),auctionItems, doubleAuctions, clients,
+                            byte[] stateBytes = Util.objectToByteBuffer(new StateSyncMessage(channel.getAddress(), auctionItems, doubleAuctions, clients,
                                     auctionItemsVersion, doubleAuctionsVersion, clientsVersion));
 
                             Message syncMessage = new Message(null, null, stateBytes);
@@ -241,6 +241,31 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
 
         return addresses;
     }
+    private void requestStateFromExistingReplicas() {
+        try {
+            View currentView = channel.getView();
+            List<Address> existingReplicas = new ArrayList<>(currentView.getMembers());
+
+            // Remove the current replica's address
+            existingReplicas.remove(channel.getAddress());
+
+            // Iterate through existing replicas and request state from each
+            for (Address replicaAddress : existingReplicas) {
+                StateSyncMessage requestStateMessage = new StateSyncMessage(channel.getAddress(),
+                        new HashMap<>(), new HashMap<>(), new HashMap<>(), 0, 0, 0);
+
+                // Send a state request message to the existing replica
+                Message requestStateMsg = new Message(replicaAddress, null, Util.objectToByteBuffer(requestStateMessage));
+                channel.send(requestStateMsg);
+
+                // Wait for a response containing the state
+                // You may need to add some logic here to handle the response
+                // and update the local state of the new replica
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 
     public static void main(String[] args) {
@@ -272,7 +297,9 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
         Naming.rebind("rmi://localhost:1099/auction", originalServer);
         System.out.println("Original auction server started");
         originalServer.start(false);
+
         replicas.add(originalServer);
+
         Thread.sleep(2000);
 
         eventLoop();
