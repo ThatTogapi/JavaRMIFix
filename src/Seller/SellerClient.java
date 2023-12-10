@@ -15,17 +15,33 @@ public class SellerClient {
 
     public static Client client;
     public static boolean login_status = false;
-
+    static List<Interface> connectedServers = new ArrayList<>();
     public static void main(String[] args) {
         try {
             Interface auctionServer = (Interface) Naming.lookup("rmi://localhost:1099/auction");
+            connectedServers.add(auctionServer);
+
+            System.out.println(auctionServer.getCurrentMemberAddresses().size());
+
+            if (!auctionServer.getCurrentMemberAddresses().isEmpty()) {
+                for (int i = 0; i < auctionServer.getCurrentMemberAddresses().size() - 1; i++) {
+                    try {
+                        Interface replicaCon = (Interface) Naming.lookup("rmi://localhost:1099/auction" + i);
+                        connectedServers.add(replicaCon);
+                        System.out.println(connectedServers);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        // Handle the exception as needed
+                    }
+                }
+            }
 
             Scanner scanner = new Scanner(System.in);
 
-            Client client = loginOrRegister(auctionServer);
+            Client client = loginOrRegister(connectedServers);
 
             if (client != null) {
-                sellerMenu(auctionServer);
+                sellerMenu(connectedServers);
             }
 
         } catch (Exception e) {
@@ -75,10 +91,10 @@ public class SellerClient {
         return hexString.toString();
     }
 
-    public static Client loginOrRegister(Interface auctionServer) throws RemoteException {
+    public static Client loginOrRegister(List<Interface> connectedServers) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
+        Interface auctionServer = connectedServers.get(0);
         int switch_choice;
-
         do {
             System.out.println("Login or Register:");
             System.out.println("1. Login");
@@ -93,10 +109,12 @@ public class SellerClient {
                     client = performLogin(auctionServer);
                     break;
                 case 2:
-                    client = performRegistration(auctionServer);
+//                        for(Interface auctionServer : connectedServers) {
+                    client = performRegistration(connectedServers);
                     if (client != null) {
                         login_status = true;
                     }
+//                        }
                     break;
                 case 0:
                     System.out.println("Exiting Seller Client...");
@@ -110,8 +128,9 @@ public class SellerClient {
         return client;
     }
 
-    private static Client performRegistration(Interface auctionServer) throws RemoteException {
+    private static Client performRegistration(List<Interface> connectedServers) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
+        Interface auctionServer = connectedServers.get(0);
         try {
             System.out.print("Enter the login ID you want: ");
             int loginID = scanner.nextInt();
@@ -134,13 +153,14 @@ public class SellerClient {
             client = new Client(loginID, password, name);
 
             // Send registration data, signature, and secret key to the server for verification
-            boolean registrationSuccessful = auctionServer.registerClient(client, registrationData, signature, secretKey);
+            for(Interface server : connectedServers) {
+                boolean registrationSuccessful = server.registerClient(client, registrationData, signature, secretKey);
 
-            if (!registrationSuccessful) {
-                System.out.println("Registration failed. Signature verification unsuccessful.");
-                return null;
+                if (!registrationSuccessful) {
+                    System.out.println("Registration failed. Signature verification unsuccessful.");
+                    return null;
+                }
             }
-
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             return null;
@@ -194,7 +214,9 @@ public class SellerClient {
         }
     }
 
-    public static void sellerMenu(Interface auctionServer) throws RemoteException {
+    public static void sellerMenu(List<Interface> connectedServers) throws RemoteException {
+
+        Interface auctionServer = connectedServers.get(0);
 
         Scanner scanner = new Scanner(System.in);
         int switch_choice;
@@ -211,7 +233,7 @@ public class SellerClient {
 
             switch (switch_choice) {
                 case 1:
-                    createListing(auctionServer);
+                    createListing(connectedServers);
                     break;
                 case 2:
                     manageListing(auctionServer);
@@ -219,7 +241,7 @@ public class SellerClient {
                 case 0:
                     System.out.println("Logging Out of Seller Client...");
                     login_status = false;
-                    loginOrRegister(auctionServer);
+                    loginOrRegister(connectedServers);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -257,7 +279,7 @@ public class SellerClient {
                     break;
                 case 0:
                     System.out.println("Going back to the seller menu.");
-                    sellerMenu(auctionServer);
+                    sellerMenu(connectedServers);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -301,12 +323,12 @@ public class SellerClient {
 
         if (item.getOwnerID() != client.getClientId()) {
             System.out.println("This auction wasn't started by you.");
-            sellerMenu(auctionServer);
+            sellerMenu(connectedServers);
         }
 
         if(auctionServer.getAuctionItems().isEmpty()){
             System.out.println("No active auctions.");
-            sellerMenu(auctionServer);
+            sellerMenu(connectedServers);
         }
 
         String name;
@@ -336,7 +358,9 @@ public class SellerClient {
                         System.out.println("The auction closed with a bid of " + item.getCurrentBid() + " and the winner is: " + item.getCurrentBidder().getClientName());
                     }
                     item.setAuctionType(4);
-                    auctionServer.updateAuctionItem(item.getItemId(), item);
+                    for(Interface server : connectedServers) {
+                        server.updateAuctionItem(item.getItemId(), item);
+                    }
                 } else if (item.getAuctionType() == 2) {
                     System.out.println("Double auction closed, matching sellers with buyers.");
                     closeDoubleAuction(auctionServer, item.getItemName());
@@ -346,11 +370,11 @@ public class SellerClient {
                 break;
             case 2:
                 System.out.println("Going back to seller menu.");
-                sellerMenu(auctionServer);
+                sellerMenu(connectedServers);
                 break;
             case 0:
                 System.out.println("Going back to seller menu.");
-                sellerMenu(auctionServer);
+                sellerMenu(connectedServers);
                 break;
             default:
                 System.out.println("Invalid choice. Please try again.");
@@ -374,7 +398,9 @@ public class SellerClient {
             for (AuctionItem doubleAuctionItem : doubleAuctionItems) {
                 if (doubleAuctionItem.getCurrentBid() > doubleAuctionItem.getReservePrice() || doubleAuctionItem.getCurrentBidder() == null) {
                     doubleAuctionItem.setAuctionType(4);
-                    auctionServer.updateAuctionItem(doubleAuctionItem.getItemId(), doubleAuctionItem);
+                    for(Interface server :connectedServers) {
+                        server.updateAuctionItem(doubleAuctionItem.getItemId(), doubleAuctionItem);
+                    }
                     String bidderName = (doubleAuctionItem.getCurrentBidder() != null)
                             ? doubleAuctionItem.getCurrentBidder().getClientName()
                             : "No Bidder";
@@ -390,7 +416,9 @@ public class SellerClient {
                     continue;
                 }
                 doubleAuctionItem.setAuctionType(4);
-                auctionServer.updateAuctionItem(doubleAuctionItem.getItemId(), doubleAuctionItem);
+                for(Interface server : connectedServers) {
+                    server.updateAuctionItem(doubleAuctionItem.getItemId(), doubleAuctionItem);
+                }
                 String bidderName = (doubleAuctionItem.getCurrentBidder() != null)
                         ? doubleAuctionItem.getCurrentBidder().getClientName()
                         : "No Bidder";
@@ -407,8 +435,9 @@ public class SellerClient {
     }
 
 
-    private static void createListing(Interface auctionServer) throws RemoteException {
+    private static void createListing(List<Interface> connectedServers) throws RemoteException {
 
+        Interface auctionServer = connectedServers.get(0);
         Scanner scanner = new Scanner(System.in);
         int switch_choice;
 
@@ -439,22 +468,26 @@ public class SellerClient {
 
             switch (switch_choice) {
                 case 1:
-                    ForwardAuction(auctionServer, item);
-                    sellerMenu(auctionServer);
+                    for(Interface server : connectedServers) {
+                        ForwardAuction(server, item);
+                    }
+                    sellerMenu(connectedServers);
                     break;
                 case 2:
                     item.setAuctionType(2);
-                    DoubleAuction(auctionServer, item);
+                    DoubleAuction(connectedServers, item);
                     System.out.println(auctionServer.getDoubleAuctions());
-                    sellerMenu(auctionServer);
+                    sellerMenu(connectedServers);
                     break;
                 case 3:
-                    ForwardAuction(auctionServer, item);
-                    sellerMenu(auctionServer);
+                    for(Interface server : connectedServers) {
+                        ForwardAuction(server, item);
+                    }
+                    sellerMenu(connectedServers);
                     break;
                 case 0:
                     System.out.println("Going back to seller menu.");
-                    sellerMenu(auctionServer);
+                    sellerMenu(connectedServers);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -463,8 +496,9 @@ public class SellerClient {
         } while (switch_choice != 0);
     }
 
-    private static void DoubleAuction(Interface auctionServer, AuctionItem item) throws RemoteException {
+    private static void DoubleAuction(List<Interface> connectedServers, AuctionItem item) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
+        Interface auctionServer = connectedServers.get(0);
 
         Map<String, List<AuctionItem>> activeDoubles = auctionServer.getDoubleAuctions();
         if(activeDoubles.containsKey(item.getItemName().toLowerCase())){
@@ -479,20 +513,24 @@ public class SellerClient {
             switch (switch_choice) {
                 case 1:
                     System.out.println("Joined the double auction.");
-                    auctionServer.putAuctionItems(item);
-                    auctionServer.putDoubleAuctions(item.getItemName().toLowerCase(),item);
+                    for(Interface server : connectedServers) {
+                        server.putAuctionItems(item);
+                        server.putDoubleAuctions(item.getItemName().toLowerCase(), item);
+                    }
                     return;
                 case 0:
                     System.out.println("Going back to seller menu.");
-                    sellerMenu(auctionServer);
+                    sellerMenu(connectedServers);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
         }
         System.out.println("Starting a new double auction.");
-        auctionServer.putAuctionItems(item);
-        auctionServer.putDoubleAuctions(item.getItemName().toLowerCase(),item);
+        for(Interface server : connectedServers) {
+            server.putAuctionItems(item);
+            server.putDoubleAuctions(item.getItemName().toLowerCase(), item);
+        }
     }
 
     private static void ForwardAuction(Interface auctionServer, AuctionItem item) throws RemoteException {

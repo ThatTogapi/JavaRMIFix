@@ -1,6 +1,7 @@
 package Buyer;
 
 import Common.AuctionItem;
+import Server.AuctionServerImpl;
 import Common.Client;
 import Common.ClientInt;
 import Common.Interface;
@@ -13,10 +14,7 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 
 public class BuyerClient {
@@ -24,53 +22,39 @@ public class BuyerClient {
 
     public static Client client;
     public static boolean login_status = false;
+    static List<Interface> connectedServers = new ArrayList<>();
 
     public static void main(String[] args) {
         try {
-            // Replace "localhost" and port numbers with the actual IP addresses or hostnames and port numbers of your replicas
-            String[] replicaAddresses = {"localhost:1099", "localhost:1099", "localhost:1099"};
+            Interface auctionServer = (Interface) Naming.lookup("rmi://localhost:1099/auction");
+            connectedServers.add(auctionServer);
 
-            Interface auctionServer = connectToReplicas(replicaAddresses);
+            System.out.println(auctionServer.getCurrentMemberAddresses().size());
 
-            if (auctionServer == null) {
-                System.out.println("Unable to connect to replicas. Exiting Buyer Client.");
-                System.exit(1);
+            if (!auctionServer.getCurrentMemberAddresses().isEmpty()) {
+                for (int i = 0; i < auctionServer.getCurrentMemberAddresses().size() - 1 ; i++) {
+                    try {
+                        Interface replicaCon = (Interface) Naming.lookup("rmi://localhost:1099/auction" + i);
+                        connectedServers.add(replicaCon);
+                        System.out.println(connectedServers);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        // Handle the exception as needed
+                    }
+                }
             }
 
             Scanner scanner = new Scanner(System.in);
 
-            client = loginOrRegister(auctionServer);
+            Client client = loginOrRegister(connectedServers);
 
             if (client != null) {
-                buyerMenu(auctionServer);
+                buyerMenu(connectedServers);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static Interface connectToReplicas(String[] replicaAddresses) {
-        int i = 0;
-        for (String replicaAddress : replicaAddresses) {
-            try {
-                String url = "rmi://" + replicaAddress + "/auction";
-                Interface server = (Interface) Naming.lookup(url);
-
-                i++;
-
-                // Test the connection by getting the number of clients
-                int numClients = server.getClients().size();
-                System.out.println("Connected to replica at " + replicaAddress + ". Number of clients: " + numClients);
-
-                // Return the first successfully connected replica
-                return server;
-            } catch (Exception e) {
-                // Print an error message and try the next replica
-                System.err.println("Error connecting to replica at " + replicaAddress + ": " + e.getMessage());
-            }
-        }
-        return null;
     }
 
     private static String generateRandomKey() {
@@ -115,100 +99,104 @@ public class BuyerClient {
         return hexString.toString();
     }
 
-    public static Client loginOrRegister(Interface auctionServer) throws RemoteException {
+    public static Client loginOrRegister(List<Interface> connectedServers) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
+        Interface auctionServer = connectedServers.get(0);
         int switch_choice;
+            do {
+                System.out.println("Login or Register:");
+                System.out.println("1. Login");
+                System.out.println("2. Register");
+                System.out.println("0. Exit");
 
-        do {
-            System.out.println("Login or Register:");
-            System.out.println("1. Login");
-            System.out.println("2. Register");
-            System.out.println("0. Exit");
+                System.out.print("Enter your choice: ");
+                switch_choice = scanner.nextInt();
 
-            System.out.print("Enter your choice: ");
-            switch_choice = scanner.nextInt();
+                switch (switch_choice) {
+                    case 1:
+                        client = performLogin(auctionServer);
+                        break;
+                    case 2:
+//                        for(Interface auctionServer : connectedServers) {
+                            client = performRegistration(connectedServers);
+                            if (client != null) {
+                                login_status = true;
+                            }
+//                        }
+                        break;
+                    case 0:
+                        System.out.println("Exiting Seller Client...");
+                        System.exit(0);
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
 
-            switch (switch_choice) {
-                case 1:
-                    client = performLogin(auctionServer);
-                    break;
-                case 2:
-                    client = performRegistration(auctionServer);
-                    if (client != null) {
-                        login_status = true;
-                    }
-                    break;
-                case 0:
-                    System.out.println("Exiting Seller Client...");
-                    System.exit(0);
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-
-            }
-        } while (!login_status);
+                }
+            } while (!login_status);
 
         return client;
     }
 
-    private static Client performRegistration(Interface auctionServer) throws RemoteException {
+    private static Client performRegistration(List<Interface> connectedServers) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
-        try {
-            System.out.print("Enter the login ID you want: ");
-            int loginID = scanner.nextInt();
-            if (auctionServer.getClients().containsKey(loginID)) {
-                System.out.println("ID already in use please choose something else");
-                return null;  // Return null to indicate registration failure
-            }
-            System.out.print("Enter your password: ");
-            String password = scanner.next();
-            System.out.print("Enter your name: ");
-            String name = scanner.next();
+        Interface auctionServer = connectedServers.get(0);
+            try {
+                System.out.print("Enter the login ID you want: ");
+                int loginID = scanner.nextInt();
+                if (auctionServer.getClients().containsKey(loginID)) {
+                    System.out.println("ID already in use please choose something else");
+                    return null;  // Return null to indicate registration failure
+                }
+                System.out.print("Enter your password: ");
+                String password = scanner.next();
+                System.out.print("Enter your name: ");
+                String name = scanner.next();
 
-            // Generate a random secret key during registration
-            String secretKey = generateRandomKey();
+                // Generate a random secret key during registration
+                String secretKey = generateRandomKey();
 
-            // Generate a signature for registration data
-            String registrationData = loginID + password + name;
-            String signature = generateSignature(registrationData, secretKey);
+                // Generate a signature for registration data
+                String registrationData = loginID + password + name;
+                String signature = generateSignature(registrationData, secretKey);
 
-            client = new Client(loginID, password, name);
+                client = new Client(loginID, password, name);
 
-            // Send registration data, signature, and secret key to the server for verification
-            boolean registrationSuccessful = auctionServer.registerClient(client, registrationData, signature, secretKey);
+                // Send registration data, signature, and secret key to the server for verification
+                for(Interface server : connectedServers) {
+                    boolean registrationSuccessful = server.registerClient(client, registrationData, signature, secretKey);
 
-            if (!registrationSuccessful) {
-                System.out.println("Registration failed. Signature verification unsuccessful.");
+                    if (!registrationSuccessful) {
+                        System.out.println("Registration failed. Signature verification unsuccessful.");
+                        return null;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error: " + e.getMessage());
                 return null;
             }
-
-        } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            return null;
-        }
         return client;
     }
 
     private static void listDoubleAuctions(Interface auctionServer) throws RemoteException {
-        for (Map.Entry<String, List<AuctionItem>> entry : auctionServer.getDoubleAuctions().entrySet()) {
-            String itemName = entry.getKey();
-            List<AuctionItem> auctionList = entry.getValue();
+            for (Map.Entry<String, List<AuctionItem>> entry : auctionServer.getDoubleAuctions().entrySet()) {
+                String itemName = entry.getKey();
+                List<AuctionItem> auctionList = entry.getValue();
 
-            System.out.println("Double Auctions for item: " + itemName + " started by " + auctionServer.getClients().get(auctionServer.getDoubleAuctions().get(itemName).get(0).getOwnerID()).getClientName());
+                System.out.println("Double Auctions for item: " + itemName + " started by " + auctionServer.getClients().get(auctionServer.getDoubleAuctions().get(itemName).get(0).getOwnerID()).getClientName());
 
-            if (auctionList != null) {
-                for (AuctionItem auctionItem : auctionList) {
-                    System.out.println("ItemID: " + auctionItem.getItemId() +
-                            "\nItem Name: " + auctionItem.getItemName() +
-                            "\nCurrent Bid: " + auctionItem.getCurrentBid() +
-                            "\nCurrent Bidder: " + (auctionItem.getCurrentBidder() != null ? auctionItem.getCurrentBidder().getClientName() : "No Bidder") +
-                            "\nItem Description: " + auctionItem.getItemDesc() +
-                            "\nAuction Owner: " + auctionServer.getClients().get(auctionItem.getOwnerID()).getClientName());
-                    System.out.println("-----------------------");
+                if (auctionList != null) {
+                    for (AuctionItem auctionItem : auctionList) {
+                        System.out.println("ItemID: " + auctionItem.getItemId() +
+                                "\nItem Name: " + auctionItem.getItemName() +
+                                "\nCurrent Bid: " + auctionItem.getCurrentBid() +
+                                "\nCurrent Bidder: " + (auctionItem.getCurrentBidder() != null ? auctionItem.getCurrentBidder().getClientName() : "No Bidder") +
+                                "\nItem Description: " + auctionItem.getItemDesc() +
+                                "\nAuction Owner: " + auctionServer.getClients().get(auctionItem.getOwnerID()).getClientName());
+                        System.out.println("-----------------------");
+                    }
+                } else {
+                    System.out.println("No auctions for this item.");
                 }
-            } else {
-                System.out.println("No auctions for this item.");
             }
-        }
     }
 
     private static Client performLogin(Interface auctionServer) throws RemoteException {
@@ -255,8 +243,9 @@ public class BuyerClient {
         }
     }
 
-    public static void buyerMenu(Interface auctionServer) throws RemoteException {
+    public static void buyerMenu(List<Interface> connectedServers) throws RemoteException {
 
+        Interface auctionServer = connectedServers.get(0);
         Scanner scanner = new Scanner(System.in);
         int switch_choice;
 
@@ -277,7 +266,9 @@ public class BuyerClient {
                     listListings(auctionServer);
                     break;
                 case 2:
-                    bidOnListing(auctionServer);
+//                    for(Interface auctionServer : connectedServers) {
+                        bidOnListing(connectedServers);
+//                    }
                     break;
                 case 3:
                     searchListings(auctionServer);
@@ -288,7 +279,7 @@ public class BuyerClient {
                 case 0:
                     System.out.println("Logging Out of Seller Client...");
                     login_status = false;
-                    loginOrRegister(auctionServer);
+                    loginOrRegister(connectedServers);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -334,8 +325,9 @@ public class BuyerClient {
         }
     }
 
-    private static void bidOnListing(Interface auctionServer) throws RemoteException {
+    private static void bidOnListing(List<Interface> connectedServers) throws RemoteException {
         Scanner scanner = new Scanner(System.in);
+        Interface auctionServer = connectedServers.get(0);
 
         System.out.print("Which item would you like to bid on:");
         int itemID = scanner.nextInt();
@@ -358,9 +350,11 @@ public class BuyerClient {
         }
         item.setCurrentBid(newBid);
         item.setCurrentBidder(client);
-        auctionServer.updateAuctionItem(item.getItemId(), item);
-        if(item.getAuctionType() == 2){
-            auctionServer.putDoubleAuctions(item.getItemName(), item);
+        for(Interface server : connectedServers) {
+            server.updateAuctionItem(item.getItemId(), item);
+            if (item.getAuctionType() == 2) {
+                server.putDoubleAuctions(item.getItemName(), item);
+            }
         }
         System.out.println("Your bid is currently the highest bid!");
     }

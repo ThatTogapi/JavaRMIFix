@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="16c61c91-c95b-4c79-86f4-bb7c8c117659" name="Changes" comment="somewhat finished">
-      <change afterPath="$PROJECT_DIR$/src/Server/State.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Server/StateSyncMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Server/StateSyncMessageInt.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="16c61c91-c95b-4c79-86f4-bb7c8c117659" name="Changes" comment="replication">
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/jgroups_3_6_20_Final.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JavaRMIFix.iml" beforeDir="false" afterPath="$PROJECT_DIR$/JavaRMIFix.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Buyer/BuyerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Buyer/BuyerClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Common/Interface.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common/Interface.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Seller/SellerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Seller/SellerClient.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server/AuctionServerImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,21 +39,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/Users/tolga/Downloads/jgroups-3.6.20.Final.jar",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Libraries",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.lookFeel"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/tolga/Downloads/jgroups-3.6.20.Final.jar&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveMembersDialog.RECENTS_KEY">
       <recent name="Buyer.BuyerClient" />
@@ -70,7 +67,7 @@
       <recent name="Seller" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Server3">
+  <component name="RunManager" selected="Application.SellerClient3">
     <configuration name="AuctionServerImpl" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="Server.AuctionServerImpl" />
       <module name="JavaRMIFix" />
@@ -156,9 +153,18 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Server4" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="Server.AuctionServerImpl" />
+      <module name="JavaRMIFix" />
+      <option name="PROGRAM_PARAMETERS" value="add" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <list>
       <item itemvalue="Application.SellerClient3" />
       <item itemvalue="Application.BuyerClient2" />
+      <item itemvalue="Application.Server4" />
       <item itemvalue="Application.BuyerClient3" />
       <item itemvalue="Application.SellerClient2" />
       <item itemvalue="Application.Server2" />
@@ -170,8 +176,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Application.AuctionServerImpl" />
-        <item itemvalue="Application.BuyerClient" />
         <item itemvalue="Application.SellerClient" />
+        <item itemvalue="Application.BuyerClient" />
+        <item itemvalue="Application.AuctionServerImpl" />
+        <item itemvalue="Application.BuyerClient" />
       </list>
     </recent_temporary>
   </component>
@@ -192,6 +200,7 @@
       <workItem from="1701767614535" duration="8632000" />
       <workItem from="1701966924999" duration="9897000" />
       <workItem from="1702042199431" duration="1810000" />
+      <workItem from="1702234570040" duration="9875000" />
     </task>
     <task id="LOCAL-00001" summary="Rewritten code for client handling.">
       <created>1700406554333</created>

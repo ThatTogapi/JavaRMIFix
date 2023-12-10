@@ -7,10 +7,7 @@ import Seller.SellerClient;
 import org.jgroups.*;
 import org.jgroups.util.Util;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -21,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AuctionServerImpl extends UnicastRemoteObject implements Interface, Receiver {
+public class AuctionServerImpl extends UnicastRemoteObject implements Interface, Receiver, Serializable {
 
     static JChannel channel;
 
@@ -40,8 +37,11 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
     private long auctionItemsVersion = 0;
     private long doubleAuctionsVersion = 0;
     private long clientsVersion = 0;
-    private static List<Object> replicas = new ArrayList<>();
+    private static List<AuctionServerImpl> replicas = new ArrayList<>();
 
+    public List<AuctionServerImpl> getReplicas() {
+        return replicas;
+    }
 
     public AuctionServerImpl() throws Exception {
         super();
@@ -204,23 +204,42 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
     }
 
 
-    private static void addReplica() throws Exception {
-        AuctionServerImpl replica = new AuctionServerImpl();
-
-        // Dynamically generate a unique RMI name for each replica
-        Naming.rebind("rmi://localhost:1099/auction" + replicas.size(), replica);
-
-        // Set up JChannel and start the replica
-        replica.channel = new JChannel();
-        replica.channel.setReceiver(replica);
-        replica.channel.connect("GroupCluster");
-        replica.start(true);
-
-        replicas.add(replica);
-
+    private static void addReplica(AuctionServerImpl replica) throws Exception {
         Thread.sleep(2000);
-
+        replicas.add(replica);
         eventLoop();
+    }
+
+    private void updateReplicasList(List<Address> currentMembers) {
+        List<AuctionServerImpl> updatedReplicas = new ArrayList<>();
+
+        // Iterate through all replicas and check if they are present in the current members
+        for (AuctionServerImpl replica : replicas) {
+            if (currentMembers.contains(replica.getChannel().getAddress()) && !updatedReplicas.contains(replica)) {
+                updatedReplicas.add(replica);
+            }
+        }
+
+        // Update the replicas list
+        replicas = updatedReplicas;
+
+        System.out.println("Updated Replicas List: " + replicas);
+        System.out.println(currentMembers);
+    }
+
+    public JChannel getChannel() {
+        return channel;
+    }
+
+    public List<String> getCurrentMemberAddresses() {
+        List<Address> members = channel.getView().getMembers();
+        List<String> addresses = new ArrayList<>();
+
+        for (Address member : members) {
+            addresses.add(member.toString());
+        }
+
+        return addresses;
     }
 
 
@@ -229,7 +248,15 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
             if (args.length == 0) {
                 startOriginalServer();
             } else if (args.length == 1 && args[0].equalsIgnoreCase("add")) {
-                addReplica();
+                AuctionServerImpl replica = new AuctionServerImpl();
+                System.out.println(replicas.size());
+                // Dynamically generate a unique RMI name for each replica
+                Naming.rebind("rmi://localhost:1099/auction" + replicas.size(), replica);
+
+                channel.setReceiver(replica);
+                replica.start(true);
+
+                addReplica(replica);
             } else {
                 System.out.println("Invalid command-line arguments.");
             }
@@ -245,7 +272,7 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
         Naming.rebind("rmi://localhost:1099/auction", originalServer);
         System.out.println("Original auction server started");
         originalServer.start(false);
-
+        replicas.add(originalServer);
         Thread.sleep(2000);
 
         eventLoop();
@@ -254,6 +281,9 @@ public class AuctionServerImpl extends UnicastRemoteObject implements Interface,
     @Override
     public void viewAccepted(View view) {
         System.out.println("Current View: " + view);
+        List<Address> currentMembers = view.getMembers();
+        // Update the replicas list with the current members
+        updateReplicasList(currentMembers);
     }
 
     @Override
